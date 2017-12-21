@@ -52,8 +52,8 @@ std::list<line>* findclosest(std::list<node>* P, std::list<node>* Q) {
 	//如果只有两个点则返回这两个点的线
 	if (P->size() ==  2){
 		std::list<line>* pveclines = new std::list<line>;
-		line* pnewline = new line(P->front(),P->back());
-		pveclines->push_back(*pnewline);
+		line pnewline(P->front(),P->back());
+		pveclines->push_back(pnewline);
 		return pveclines;
 	}
 	//如果只有三个点则返回这三个点的最近点对
@@ -62,17 +62,17 @@ std::list<line>* findclosest(std::list<node>* P, std::list<node>* Q) {
 		std::list<node>::iterator IterP0 = P->begin();
 		std::list<node>::iterator IterP1 = ++(P->begin());
 		std::list<node>::iterator IterP2 = --(P->end());
-		line* pnewline1 = new line(*IterP0, *IterP1);
-		line* pnewline2 = new line(*IterP1, *IterP2);
-		line* pnewline3 = new line(*IterP0, *IterP2);
-		pveclines->push_back(*pnewline1);
-		pveclines->push_back(*pnewline2);
-		pveclines->push_back(*pnewline3);
-		double destance = pnewline1->distance;//假定line1最短
-		if (pnewline2->distance < destance) 
-			destance = pnewline2->distance;
-		if (pnewline3->distance < destance)
-			destance = pnewline3->distance;
+		line pnewline1(*IterP0, *IterP1);
+		line pnewline2(*IterP1, *IterP2);
+		line pnewline3(*IterP0, *IterP2);
+		pveclines->push_back(pnewline1);
+		pveclines->push_back(pnewline2);
+		pveclines->push_back(pnewline3);
+		double destance = pnewline1.distance;//假定line1最短
+		if (pnewline2.distance < destance) 
+			destance = pnewline2.distance;
+		if (pnewline3.distance < destance)
+			destance = pnewline3.distance;
 		//pveclines->remove_if([](line line) { return line.distance > destance; });
 		std::list<line>::iterator Iter = pveclines->begin();
 		while(Iter != pveclines->end()){
@@ -153,20 +153,18 @@ std::list<line>* findclosest(std::list<node>* P, std::list<node>* Q) {
 		for (; IterQj != Q->end(); IterQj++) {
 			if ((IterQi->y - IterQj->y) > delta)
 				break;
-			line* newline = new line(*IterQi, *IterQj);
-			if (newline->distance < delta) {
-				delta = newline->distance;
+			line newline(*IterQi, *IterQj);
+			if (newline.distance < delta) {
+				delta = newline.distance;
 				pvecC.clear();//清空表
-				pvecC.push_back(*newline);
+				pvecC.push_back(newline);
 			}
-			else if (newline->distance == delta) {
-				if (newline->node1.node_side == newline->node2.node_side)
+			else if (newline.distance == delta) {
+				if (newline.node1.node_side == newline.node2.node_side)
 					continue;//如果Qi和Qj在同一边则不加入pvecC
 				else
-					pvecC.push_back(*newline);
+					pvecC.push_back(newline);
 			}
-			else
-				free(newline);
 		}
 	}
 	std::list<line>* pveclines = new std::list<line>;
@@ -196,14 +194,15 @@ std::list<line>* findclosest(std::list<node>* P, std::list<node>* Q) {
 }
 
 int main(){
+
+	freopen("lab1_test.txt", "r", stdin);
+	freopen("result.txt", "w", stdout);
+
 	std::list<node> Px;
 	std::list<node> Qy;
 	//输入点集
 	int n = 0;
-	FILE *streamin = freopen("test.txt", "r", stdin);
-	FILE *streamout = freopen("result.txt", "w", stdout);
 	cin >> n;
-
 	for (int i = 0; i < n; i++) {
 		char c;
 		double x, y;
@@ -225,7 +224,7 @@ int main(){
 	//输出最近点对
 	std::list<line>::iterator IterLine = closestline->begin();
 	for (; IterLine != closestline->end(); IterLine++) {
-		cout << "(" << IterLine->node1.x << ", " << IterLine->node1.y << ") -> ";
+		cout << "(" << IterLine->node1.x << ", " << IterLine->node1.y << ") --> ";
 		cout << "(" << IterLine->node2.x << ", " << IterLine->node2.y << ")";
 		cout << " distance = " << IterLine->distance << endl;
 	}

@@ -1,3 +1,7 @@
 
-proj1/proj1/Debug
-proj1/Debug
+project/.vs
+project/Debug
+project/project/Debug
+
+project/project/Release
+project/Release
