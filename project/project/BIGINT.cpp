@@ -1,54 +1,80 @@
 #include <iostream>
 #include <string>
-
+#include <stdlib.h>
 using namespace std;
 
 class BigInt {
 public:
-	BigInt() {
-		len = 0;
-		sign = '+';
-		nums = nullptr;
-	}
+	BigInt() :sign('+'), isZero(true), len(0), nums(NULL) {}
 	BigInt(char sign_digit,const char* StringNum,unsigned int len){
 		sign = sign_digit;
 		this->len = len;
-		int i = sizeof(char);
-		nums = new char[len + 1];
-		strcpy(nums, StringNum);
+		if(len == 0){
+			isZero = true;
+			nums = NULL;
+		}
+		else {
+			isZero = false;
+			nums = new char[len + 1];
+			nums[len] = '\0';
+			memcpy(nums, StringNum,len);
+		}
 	}
 	BigInt(const BigInt &bigint) {
 		this->sign = bigint.sign;
+		this->isZero = bigint.isZero;
 		this->len = bigint.len;
+		if (bigint.isZero == true) {
+			nums = NULL;
+			return;
+		}
 		nums = new char[bigint.len + 1];
 		strcpy(this->nums, bigint.nums);
 	}
 	~BigInt() {
-		if (nums != nullptr)
+		if (nums != NULL)
 			free(nums);
-	}
-	const BigInt ExternedTo(unsigned int newlen)const{
-		std::string buf;
-		int i = 0;
-		for (; i < newlen - this->len; i++)
-			buf.push_back('0');
-		buf.append(this->nums);
-		return BigInt(this->sign, buf.c_str(), newlen);
-	}
-	char operator [] (size_t pos) {
-		if (nums != nullptr && pos < len)
-			return nums[pos];
-		else
-			return NULL;
 	}
 	const BigInt operator = (const BigInt& bigint) {
 		this->sign = bigint.sign;
+		this->isZero = bigint.isZero;
 		this->len = bigint.len;
+		if (this->nums != NULL)
+			free(nums);
+		if (bigint.isZero == true) {
+			this->nums = NULL;
+			return *this;
+		}
 		nums = new char[bigint.len + 1];
 		strcpy(this->nums, bigint.nums);
 		return *this;
 	}
-	const BigInt operator + (const BigInt& num)const {
+	const BigInt ExternedTo(unsigned int newlen)const{
+		std::string buf;
+		buf.append(newlen - this->len, '0');
+		buf.append(this->nums);
+		return BigInt(this->sign, buf.c_str(), buf.size());
+	}
+	const char	operator [] (size_t pos)const{
+		if (nums != NULL && pos < len)
+			return nums[pos];
+		else
+			return NULL;
+	}
+	const BigInt operator << (size_t shamt)const{
+		if (this->isZero == true)
+			return BigInt('+', "", 0);
+		std::string buf;
+		buf.append(this->nums);
+		buf.append(shamt, '0');
+		return BigInt(this->sign, buf.c_str(), buf.size());
+	}
+	const BigInt operator +	(const BigInt& num)const {
+		if (num.isZero == true)
+			return *this;
+		else if (this->isZero == true) {
+			return num;
+		}
 		if (this->sign < num.sign) {//正数 + 负数 转为 正数 - 正数
 			return *this - BigInt('+', num.nums, num.len);
 		}
@@ -77,13 +103,22 @@ public:
 				sumbuf[i] = '0';//进位
 			sumbuf[i + 1] = (char)(tmp + 48);//和
 		}
-		int i = 0;
-		while (sumbuf[i] == '0')
-			i++;//使sumbuf+i指向第一个不为‘0’的元素
-		
-		return BigInt('+', sumbuf.c_str() + i, sumlen - i + 1);
+		for (int i = 0; i < sumbuf.size(); i++) {
+			if (sumbuf[i] != '0')
+				return BigInt('+', sumbuf.c_str() + i, sumlen - i + 1);
+		}
+		return BigInt('+', "",0);
+
 	}
-	const BigInt operator -(const BigInt& num)const{
+	const BigInt operator -	(const BigInt& num)const{
+		if (num.isZero == true)
+			return *this;
+		else if(this->isZero == true){
+			if (num.sign == '+')
+				return BigInt('-', num.nums, num.len);
+			else
+				return BigInt('+', num.nums, num.len);
+		}
 		if (this->sign < num.sign) {//正数x - 负数y 转为 正数x + 正数y
 			return *this + BigInt('+', num.nums, num.len);
 		}
@@ -102,21 +137,25 @@ public:
 		}
 		else if (this->len == num.len) {
 			for (int i = 0; i < this->len; i++) {
-				if (this->nums[i] > num.nums[i]) {//小正数 - 大正数 转为 -（大正数 - 小正数）
+				if (this->nums[i] == num.nums[i])
+					continue;
+				else if (this->nums[i] < num.nums[i]) {//小正数 - 大正数 转为 -（大正数 - 小正数）
 					BigInt diff = num - *this;
 					diff.sign = '-';
 					return diff;
 				}
+				else
+					break;
 			}
 		}
 		//否则做 大正数 - 小正数
-		unsigned int sumlen = this->len > num.len ? this->len : num.len;
-		BigInt num1 = this->ExternedTo(sumlen);
-		BigInt num2 = num.ExternedTo(sumlen);
+		unsigned int difflen = this->len > num.len ? this->len : num.len;
+		BigInt num1 = this->ExternedTo(difflen);
+		BigInt num2 = num.ExternedTo(difflen);
 		std::string diffbuf;//暂存差
-		diffbuf.resize(sumlen + 1, '0');
+		diffbuf.resize(difflen + 1, '0');
 
-		for (int i = sumlen - 1; i >= 0; i--) {
+		for (int i = difflen - 1; i >= 0; i--) {
 			int tmp = num1[i] - num2[i] - diffbuf[i + 1] + 48;
 			if (tmp < 0) {
 				diffbuf[i] = '1';//借位位
@@ -126,30 +165,67 @@ public:
 				diffbuf[i] = '0';//进位
 			diffbuf[i + 1] = (char)(tmp + 48);//差
 		}
-		int i = 0;
-		while (diffbuf[i] == '0')
-			i++;//使diffbuf+i指向第一个不为‘0’的元素
-		//BigInt diff('+', diffbuf.c_str() + i, sumlen - i + 1);
-		return BigInt('+', diffbuf.c_str() + i, sumlen - i + 1);
+		
+		for (int i = 0; i < diffbuf.size(); i++) {
+			if (diffbuf[i] != '0')
+				return BigInt('+', diffbuf.c_str() + i, difflen - i + 1);
+		}
+		return BigInt('+', "", 0);
 	}
-	const BigInt operator *(const BigInt& num)const {
+	const BigInt operator *	(const BigInt& num)const {
+		char procuctsign = this->sign == num.sign ? '+' : '-';
+		if (this->isZero == true || num.isZero == true)//如果有一个因数为0
+			return BigInt(procuctsign, "", 0);//返回0
+		if (this->len < 10 && num.len < 10) {
+			long long product = atoll(this->nums) * atoll(num.nums);
+			char buffer[20] = "";
+			_i64toa(product, buffer, 10);
+			int i = strlen(buffer);
+			return BigInt(procuctsign, buffer, strlen(buffer));//返回小于9位的数的积
+		}
+		BigInt A, B, C, D;
+		unsigned int biggerlen = this->len > num.len ? this->len : num.len;
+		biggerlen += biggerlen % 2;//
+		unsigned int factorlen = biggerlen / 2;
 
+		BigInt num1 = this->ExternedTo(biggerlen);
+		BigInt num2 = num.ExternedTo(biggerlen);
+		if(this->len > factorlen)
+			A = BigInt('+', num1.nums, factorlen);
+		if (num.len > factorlen)
+			C = BigInt('+', num2.nums, factorlen);
+		B = BigInt('+m', num1.nums + factorlen, factorlen);
+		D = BigInt('+', num2.nums + factorlen, factorlen);
+		BigInt AC = A * C;
+		BigInt BD = B * D;
+		BigInt A_B = A - B;
+		BigInt D_C = D - C;
+		BigInt A_B_D_C = A_B*D_C;
+		BigInt AC_ = AC << 2 * factorlen;
+		BigInt ABDC = A_B_D_C + AC + BD;
+		BigInt ABDC_ = ABDC << factorlen;
+		BigInt PRO = AC_ + ABDC_ + BD;
+		BigInt product = (AC << 2 * factorlen) + ((A_B_D_C + AC + BD) << factorlen) + BD;
+		product.sign = procuctsign;
+		return product;
 
-		return num;
 	}
 	friend inline ostream &operator << (ostream& outstream, const BigInt& bigint);//输出流
 	friend inline istream &operator >> (istream& instream, BigInt& bigint);//输入流
+public:
 	char sign;
-	char* nums;
+	bool isZero;
 	unsigned int  len;
-
+	char* nums;
 };
 
 inline ostream & operator<<(ostream & outstream, const BigInt& bigint)
 {
 	if (bigint.sign == '-')
 		outstream << '-';
-	if (bigint.nums != nullptr)
+	if (bigint.isZero == true)
+		outstream << '0';
+	else if (bigint.nums != NULL)
 		outstream << bigint.nums;
 	return outstream;
 }
@@ -158,49 +234,37 @@ inline istream & operator>>(istream& instream, BigInt& bigint)
 {
 	std::string numstr;
 	instream >> numstr;
-
-	if(numstr.front() == '-'){
-		bigint.sign = '-';
-		bigint.len = numstr.size() - 1;
-		if (bigint.nums != nullptr)
-			free(bigint.nums);
-		bigint.nums = new char[bigint.len + 1];
-		strcpy(bigint.nums, numstr.c_str() + 1);
+	int offset = 0;
+	if(numstr.front() == '-' || numstr.front() == '+'){
+		bigint.sign = numstr.front();
+		offset = 1;
 	}
-	else if(numstr.front() == '+'){
+	else
 		bigint.sign = '+';
-		bigint.len = numstr.size() - 1;
-		if (bigint.nums != nullptr)
-			free(bigint.nums);
-		bigint.nums = new char[bigint.len + 1];
-		strcpy(bigint.nums, numstr.c_str() + 1);
+	for (int i = offset; i < numstr.size(); i++) {
+		if (numstr[i] != '0') {
+			bigint.isZero = false;
+			bigint.len = numstr.size() - i;
+			if (bigint.nums != NULL)
+				free(bigint.nums);
+			bigint.nums = new char[bigint.len + 1];
+			strcpy(bigint.nums, numstr.c_str() + i);
+			return instream;
+		}
 	}
-	else if(numstr.front() > '9' || numstr.front() < '0'){//如果第一个字符不是‘+’、‘-’或数字
-		cout << "error:not decimal num!" << endl;
-	}
-	else{
-		bigint.sign = '+';
-		bigint.len = numstr.size();
-		if (bigint.nums != nullptr)
-			free(bigint.nums);
-		bigint.nums = new char[bigint.len + 1];
-		strcpy(bigint.nums, numstr.c_str());
-	}
+	bigint.isZero = true;
+	bigint.len = 0;
+	if (bigint.nums != NULL)
+		free(bigint.nums);
+	bigint.nums = NULL;
 	return instream;
 }
 
-
 int main(){
-	
-	freopen("lab2_test.txt", "r", stdin);
-	freopen("result.txt", "w", stdout);
-	
-	BigInt a, b, c, d;
+	BigInt a, b, result;
 	cin >> a >> b;
-	c = a + b;
-	d = a - b;
-	cout << c << endl;
-	cout << d << endl;
+	result = a * b;
+	cout << result << endl;
 	return 0;
 }
 
