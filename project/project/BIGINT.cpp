@@ -1,6 +1,10 @@
 #include <iostream>
+#include <fstream>
+#include <cstdio>
 #include <string>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
+
 using namespace std;
 
 class BigInt {
@@ -16,8 +20,9 @@ public:
 		else {
 			isZero = false;
 			nums = new char[len + 1];
+			for (int i = 0; i < len; i++)
+				nums[i] = StringNum[i];
 			nums[len] = '\0';
-			memcpy(nums, StringNum,len);
 		}
 	}
 	BigInt(const BigInt &bigint) {
@@ -29,7 +34,9 @@ public:
 			return;
 		}
 		nums = new char[bigint.len + 1];
-		strcpy(this->nums, bigint.nums);
+		for (int i = 0; i < bigint.len; i++)
+			nums[i] = bigint.nums[i];
+		nums[len] = '\0';
 	}
 	~BigInt() {
 		if (nums != NULL)
@@ -46,7 +53,9 @@ public:
 			return *this;
 		}
 		nums = new char[bigint.len + 1];
-		strcpy(this->nums, bigint.nums);
+		for (int i = 0; i < bigint.len; i++)
+			nums[i] = bigint.nums[i];
+		nums[len] = '\0';
 		return *this;
 	}
 	const BigInt ExternedTo(unsigned int newlen)const{
@@ -59,7 +68,7 @@ public:
 		if (nums != NULL && pos < len)
 			return nums[pos];
 		else
-			return NULL;
+			return 0;
 	}
 	const BigInt operator << (size_t shamt)const{
 		if (this->isZero == true)
@@ -179,8 +188,7 @@ public:
 		if (this->len < 10 && num.len < 10) {
 			long long product = atoll(this->nums) * atoll(num.nums);
 			char buffer[20] = "";
-			_i64toa(product, buffer, 10);
-			int i = strlen(buffer);
+			sprintf(buffer, "%lld", product);
 			return BigInt(procuctsign, buffer, strlen(buffer));//返回小于9位的数的积
 		}
 		BigInt A, B, C, D;
@@ -194,17 +202,13 @@ public:
 			A = BigInt('+', num1.nums, factorlen);
 		if (num.len > factorlen)
 			C = BigInt('+', num2.nums, factorlen);
-		B = BigInt('+m', num1.nums + factorlen, factorlen);
+		B = BigInt('+', num1.nums + factorlen, factorlen);
 		D = BigInt('+', num2.nums + factorlen, factorlen);
 		BigInt AC = A * C;
 		BigInt BD = B * D;
 		BigInt A_B = A - B;
 		BigInt D_C = D - C;
 		BigInt A_B_D_C = A_B*D_C;
-		BigInt AC_ = AC << 2 * factorlen;
-		BigInt ABDC = A_B_D_C + AC + BD;
-		BigInt ABDC_ = ABDC << factorlen;
-		BigInt PRO = AC_ + ABDC_ + BD;
 		BigInt product = (AC << 2 * factorlen) + ((A_B_D_C + AC + BD) << factorlen) + BD;
 		product.sign = procuctsign;
 		return product;
@@ -235,8 +239,8 @@ inline istream & operator>>(istream& instream, BigInt& bigint)
 	std::string numstr;
 	instream >> numstr;
 	int offset = 0;
-	if(numstr.front() == '-' || numstr.front() == '+'){
-		bigint.sign = numstr.front();
+	if(numstr.at(0) == '-' || numstr.at(0) == '+'){
+		bigint.sign = numstr.at(0);
 		offset = 1;
 	}
 	else
@@ -248,7 +252,9 @@ inline istream & operator>>(istream& instream, BigInt& bigint)
 			if (bigint.nums != NULL)
 				free(bigint.nums);
 			bigint.nums = new char[bigint.len + 1];
-			strcpy(bigint.nums, numstr.c_str() + i);
+			for (int j = 0; j < bigint.len; j++)
+				bigint.nums[j] = numstr[j + i];
+			bigint.nums[bigint.len] = '\0';
 			return instream;
 		}
 	}
@@ -261,10 +267,19 @@ inline istream & operator>>(istream& instream, BigInt& bigint)
 }
 
 int main(){
+	std::ifstream cin("lab2_test.txt");
+	if (0 == cin.is_open()) {
+		cout << "找不到文件lab2_test.txt!" << endl;
+		getchar();
+		return 0;
+	}
 	BigInt a, b, result;
 	cin >> a >> b;
-	result = a * b;
-	cout << result << endl;
+	cout << "+ : " << a + b << endl;
+	cout << "- : " << a - b << endl;
+	cout << "* : " << a * b << endl << endl;
+
+	getchar();
 	return 0;
 }
 

@@ -1,5 +1,8 @@
 #include <iostream>
+#include <fstream>
+#include <cstdio>
 #include <list>
+#include <math.h>
 #include <algorithm>
 
 using namespace std;
@@ -195,8 +198,12 @@ std::list<line>* findclosest(std::list<node>* P, std::list<node>* Q) {
 
 int main(){
 
-	freopen("lab1_test.txt", "r", stdin);
-	freopen("result.txt", "w", stdout);
+	std::ifstream cin("lab1_test.txt");
+	if (0 == cin.is_open()) {
+		cout << "找不到文件lab1_test.txt!" << endl;
+		getchar();
+		return 0;
+	}
 
 	std::list<node> Px;
 	std::list<node> Qy;
@@ -228,5 +235,6 @@ int main(){
 		cout << "(" << IterLine->node2.x << ", " << IterLine->node2.y << ")";
 		cout << " distance = " << IterLine->distance << endl;
 	}
+	getchar();
 	return 0;
 }

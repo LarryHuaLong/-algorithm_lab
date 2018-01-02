@@ -114,11 +114,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="lab2_test.txt" />
-    <Text Include="result.txt" />
+    <Text Include="lab3_test.txt" />
+    <Text Include="lab4_test.txt" />
     <Text Include="lab1_test.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="BIGINT.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

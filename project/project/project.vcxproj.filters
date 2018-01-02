@@ -15,19 +15,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="result.txt">
-      <Filter>资源文件</Filter>
-    </Text>
     <Text Include="lab1_test.txt">
       <Filter>资源文件</Filter>
     </Text>
     <Text Include="lab2_test.txt">
       <Filter>资源文件</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="BIGINT.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
+    <Text Include="lab3_test.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="lab4_test.txt">
+      <Filter>资源文件</Filter>
+    </Text>
   </ItemGroup>
 </Project>
